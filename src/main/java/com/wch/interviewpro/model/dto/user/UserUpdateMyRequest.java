@@ -1,6 +1,8 @@
 package com.wch.interviewpro.model.dto.user;
 
 import java.io.Serializable;
+import java.util.Date;
+
 import lombok.Data;
 
 /**
@@ -26,6 +28,7 @@ public class UserUpdateMyRequest implements Serializable {
      * 简介
      */
     private String userProfile;
+
 
     private static final long serialVersionUID = 1L;
 }

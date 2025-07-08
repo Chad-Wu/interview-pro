@@ -1,6 +1,8 @@
 package com.wch.interviewpro.model.dto.user;
 
 import java.io.Serializable;
+import java.util.Date;
+
 import lombok.Data;
 
 /**
@@ -35,6 +37,20 @@ public class UserUpdateRequest implements Serializable {
      * 用户角色：user/admin/ban
      */
     private String userRole;
+
+    /**
+     * 会员过期时间
+     */
+    private Date vipExpireTime;
+    /**
+     * 会员兑换码
+     */
+    private String vipCode;
+
+    /**
+     * 会员编号
+     */
+    private Long vipNumber;
 
     private static final long serialVersionUID = 1L;
 }

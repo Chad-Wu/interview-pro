@@ -19,7 +19,10 @@ public class UserQueryRequest extends PageRequest implements Serializable {
      * id
      */
     private Long id;
-
+    /**
+     * 账号
+     */
+    private String userAccount;
     /**
      * 开放平台id
      */
@@ -44,6 +47,15 @@ public class UserQueryRequest extends PageRequest implements Serializable {
      * 用户角色：user/admin/ban
      */
     private String userRole;
+    /**
+     * 会员兑换码
+     */
+    private String vipCode;
+
+    /**
+     * 会员编号
+     */
+    private Long vipNumber;
 
     private static final long serialVersionUID = 1L;
 }
