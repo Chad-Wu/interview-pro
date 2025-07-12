@@ -13,7 +13,6 @@ import java.util.List;
  * 题目视图
  *
  * @author <a href="https://github.com/Chad-Wu">chonghe</a>
- * @from <a href="https://www.code-nav.cn">编程导航学习圈</a>
  */
 @Data
 public class QuestionVO implements Serializable {
@@ -51,6 +50,10 @@ public class QuestionVO implements Serializable {
      * 收藏数
      */
     private Integer favourNum;
+    /**
+     * 推荐答案
+     */
+    private String answer;
 
     /**
      * 编辑时间
@@ -62,10 +65,6 @@ public class QuestionVO implements Serializable {
      */
     private Date createTime;
 
-    /**
-     * 更新时间
-     */
-    private Date updateTime;
 
     /**
      * 标签列表

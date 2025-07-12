@@ -25,9 +25,9 @@ public class QuestionBankEditRequest implements Serializable {
     private String title;
 
     /**
-     * 内容
+     * 描述
      */
-    private String content;
+    private String description;
     /**
      * 图片
      */

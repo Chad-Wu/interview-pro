@@ -77,7 +77,7 @@ public class QuestionBankServiceImpl extends ServiceImpl<QuestionBankMapper, Que
         // todo 从对象中取值
         Long id = questionBankQueryRequest.getId();
         String title = questionBankQueryRequest.getTitle();
-        String content = questionBankQueryRequest.getContent();
+        String description = questionBankQueryRequest.getDescription();
         String searchText = questionBankQueryRequest.getSearchText();
         String sortField = questionBankQueryRequest.getSortField();
         String sortOrder = questionBankQueryRequest.getSortOrder();
@@ -86,11 +86,11 @@ public class QuestionBankServiceImpl extends ServiceImpl<QuestionBankMapper, Que
         // 从多字段中搜索
         if (StringUtils.isNotBlank(searchText)) {
             // 需要拼接查询条件
-            queryWrapper.and(qw -> qw.like("title", searchText).or().like("content", searchText));
+            queryWrapper.and(qw -> qw.like("title", searchText).or().like("description", searchText));
         }
         // 模糊查询
         queryWrapper.like(StringUtils.isNotBlank(title), "title", title);
-        queryWrapper.like(StringUtils.isNotBlank(content), "content", content);
+        queryWrapper.like(StringUtils.isNotBlank(description), "description", description);
 
         queryWrapper.eq(ObjectUtils.isNotEmpty(id), "id", id);
         queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);

@@ -9,14 +9,14 @@ import com.wch.interviewpro.common.ResultUtils;
 import com.wch.interviewpro.constant.UserConstant;
 import com.wch.interviewpro.exception.BusinessException;
 import com.wch.interviewpro.exception.ThrowUtils;
-import com.wch.interviewpro.model.dto.questionBank.QuestionBankAddRequest;
-import com.wch.interviewpro.model.dto.questionBank.QuestionBankEditRequest;
-import com.wch.interviewpro.model.dto.questionBank.QuestionBankQueryRequest;
-import com.wch.interviewpro.model.dto.questionBank.QuestionBankUpdateRequest;
+import com.wch.interviewpro.model.dto.question.QuestionQueryRequest;
+import com.wch.interviewpro.model.dto.questionBank.*;
+import com.wch.interviewpro.model.entity.Question;
 import com.wch.interviewpro.model.entity.QuestionBank;
 import com.wch.interviewpro.model.entity.User;
 import com.wch.interviewpro.model.vo.QuestionBankVO;
 import com.wch.interviewpro.service.QuestionBankService;
+import com.wch.interviewpro.service.QuestionService;
 import com.wch.interviewpro.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -41,6 +41,8 @@ public class QuestionBankController {
 
     @Resource
     private UserService userService;
+    @Resource
+    private QuestionService questionService;
 
     // region 增删改查
 
@@ -52,6 +54,7 @@ public class QuestionBankController {
      * @return
      */
     @PostMapping("/add")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Long> addQuestionBank(@RequestBody QuestionBankAddRequest questionBankAddRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(questionBankAddRequest == null, ErrorCode.PARAMS_ERROR);
         // todo 在此处将实体类和 DTO 进行转换
@@ -78,6 +81,7 @@ public class QuestionBankController {
      * @return
      */
     @PostMapping("/delete")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> deleteQuestionBank(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -127,17 +131,30 @@ public class QuestionBankController {
     /**
      * 根据 id 获取题库（封装类）
      *
-     * @param id
+     * @param idRequest
      * @return
      */
     @GetMapping("/get/vo")
-    public BaseResponse<QuestionBankVO> getQuestionBankVOById(long id, HttpServletRequest request) {
+    public BaseResponse<QuestionBankVO> getQuestionBankVOById(QuestionBankIdRequest idRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(idRequest == null, ErrorCode.PARAMS_ERROR);
+        Long id = idRequest.getId();
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         // 查询数据库
         QuestionBank questionBank = questionBankService.getById(id);
         ThrowUtils.throwIf(questionBank == null, ErrorCode.NOT_FOUND_ERROR);
         // 获取封装类
-        return ResultUtils.success(questionBankService.getQuestionBankVO(questionBank, request));
+        QuestionBankVO questionBankVO = questionBankService.getQuestionBankVO(questionBank, request);
+        // 获取题库下的题目
+        if (idRequest.getNeedQuestionList()) {
+            QuestionQueryRequest questionQueryRequest = new QuestionQueryRequest();
+            questionQueryRequest.setQuestionBankId(id);
+            Page<Question> questionPage = questionService.listQuestionPage(questionQueryRequest);
+
+            questionBankVO.setQuestionPage(questionService.getQuestionVOPage(questionPage, request));
+        }
+
+
+        return ResultUtils.success(questionBankVO);
     }
 
     /**
@@ -170,7 +187,7 @@ public class QuestionBankController {
         long current = questionBankQueryRequest.getCurrent();
         long size = questionBankQueryRequest.getPageSize();
         // 限制爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(size > 200, ErrorCode.PARAMS_ERROR);
         // 查询数据库
         Page<QuestionBank> questionBankPage = questionBankService.page(new Page<>(current, size),
                 questionBankService.getQueryWrapper(questionBankQueryRequest));
@@ -195,7 +212,7 @@ public class QuestionBankController {
         long current = questionBankQueryRequest.getCurrent();
         long size = questionBankQueryRequest.getPageSize();
         // 限制爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(size > 200, ErrorCode.PARAMS_ERROR);
         // 查询数据库
         Page<QuestionBank> questionBankPage = questionBankService.page(new Page<>(current, size),
                 questionBankService.getQueryWrapper(questionBankQueryRequest));
@@ -211,6 +228,7 @@ public class QuestionBankController {
      * @return
      */
     @PostMapping("/edit")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> editQuestionBank(@RequestBody QuestionBankEditRequest questionBankEditRequest, HttpServletRequest request) {
         if (questionBankEditRequest == null || questionBankEditRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);

@@ -1,5 +1,10 @@
 package com.wch.interviewpro.controller;
 
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wch.interviewpro.annotation.AuthCheck;
 import com.wch.interviewpro.common.BaseResponse;
@@ -14,8 +19,10 @@ import com.wch.interviewpro.model.dto.question.QuestionEditRequest;
 import com.wch.interviewpro.model.dto.question.QuestionQueryRequest;
 import com.wch.interviewpro.model.dto.question.QuestionUpdateRequest;
 import com.wch.interviewpro.model.entity.Question;
+import com.wch.interviewpro.model.entity.QuestionBankQuestion;
 import com.wch.interviewpro.model.entity.User;
 import com.wch.interviewpro.model.vo.QuestionVO;
+import com.wch.interviewpro.service.QuestionBankQuestionService;
 import com.wch.interviewpro.service.QuestionService;
 import com.wch.interviewpro.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +31,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 题目接口
@@ -38,6 +47,8 @@ public class QuestionController {
 
     @Resource
     private QuestionService questionService;
+    @Resource
+    private QuestionBankQuestionService questionBankQuestionService;
 
     @Resource
     private UserService userService;
@@ -55,8 +66,19 @@ public class QuestionController {
     public BaseResponse<Long> addQuestion(@RequestBody QuestionAddRequest questionAddRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(questionAddRequest == null, ErrorCode.PARAMS_ERROR);
         // todo 在此处将实体类和 DTO 进行转换
+//        Question question = new Question();
+//        BeanUtils.copyProperties(questionAddRequest, question);
+//        List<String> tags = questionAddRequest.getTags();
+//        if (tags != null) {
+//            question.setTags(JSONUtil.toJsonStr(tags));
+//        }
+
         Question question = new Question();
         BeanUtils.copyProperties(questionAddRequest, question);
+        List<String> tags = questionAddRequest.getTags();
+        if (tags != null) {
+            question.setTags(JSONUtil.toJsonStr(tags));
+        }
         // 数据校验
         questionService.validQuestion(question, true);
         // todo 填充默认值
@@ -149,11 +171,9 @@ public class QuestionController {
     @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<Question>> listQuestionByPage(@RequestBody QuestionQueryRequest questionQueryRequest) {
-        long current = questionQueryRequest.getCurrent();
-        long size = questionQueryRequest.getPageSize();
+        ThrowUtils.throwIf(questionQueryRequest == null, ErrorCode.PARAMS_ERROR);
         // 查询数据库
-        Page<Question> questionPage = questionService.page(new Page<>(current, size),
-                questionService.getQueryWrapper(questionQueryRequest));
+        Page<Question> questionPage = questionService.listQuestionPage(questionQueryRequest);
         return ResultUtils.success(questionPage);
     }
 
@@ -218,6 +238,10 @@ public class QuestionController {
         // todo 在此处将实体类和 DTO 进行转换
         Question question = new Question();
         BeanUtils.copyProperties(questionEditRequest, question);
+        List<String> tags = questionEditRequest.getTags();
+        if (tags != null) {
+            question.setTags(JSONUtil.toJsonStr(tags));
+        }
         // 数据校验
         questionService.validQuestion(question, false);
         User loginUser = userService.getLoginUser(request);

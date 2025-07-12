@@ -1,6 +1,8 @@
 package com.wch.interviewpro.model.vo;
 
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.wch.interviewpro.model.entity.Question;
 import com.wch.interviewpro.model.entity.QuestionBank;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;
@@ -62,6 +64,8 @@ public class QuestionBankVO implements Serializable {
      * 创建用户信息
      */
     private UserVO user;
+
+    private Page<QuestionVO> questionPage;
 
     /**
      * 封装类转对象

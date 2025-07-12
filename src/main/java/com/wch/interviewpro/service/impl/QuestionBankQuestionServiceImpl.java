@@ -9,11 +9,14 @@ import com.wch.interviewpro.constant.CommonConstant;
 import com.wch.interviewpro.exception.ThrowUtils;
 import com.wch.interviewpro.mapper.QuestionBankQuestionMapper;
 import com.wch.interviewpro.model.dto.questionBankQuestion.QuestionBankQuestionQueryRequest;
+import com.wch.interviewpro.model.entity.Question;
 import com.wch.interviewpro.model.entity.QuestionBankQuestion;
 import com.wch.interviewpro.model.entity.User;
 import com.wch.interviewpro.model.vo.QuestionBankQuestionVO;
 import com.wch.interviewpro.model.vo.UserVO;
 import com.wch.interviewpro.service.QuestionBankQuestionService;
+import com.wch.interviewpro.service.QuestionBankService;
+import com.wch.interviewpro.service.QuestionService;
 import com.wch.interviewpro.service.UserService;
 import com.wch.interviewpro.utils.SqlUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -36,6 +39,10 @@ public class QuestionBankQuestionServiceImpl extends ServiceImpl<QuestionBankQue
     implements QuestionBankQuestionService {
     @Resource
     private UserService userService;
+    @Resource
+    private QuestionService questionService;
+    @Resource
+    private QuestionBankService questionBankService;
 
     /**
      * 校验数据
@@ -46,7 +53,13 @@ public class QuestionBankQuestionServiceImpl extends ServiceImpl<QuestionBankQue
     @Override
     public void validQuestionBankQuestion(QuestionBankQuestion questionBankQuestion, boolean add) {
         ThrowUtils.throwIf(questionBankQuestion == null, ErrorCode.PARAMS_ERROR);
-        // todo 从对象中取值
+        // 判断题目题库是否存在
+        Long questionId = questionBankQuestion.getQuestionId();
+        Long questionBankId = questionBankQuestion.getQuestionBankId();
+        ThrowUtils.throwIf(
+                questionService.getById(questionId) == null || questionBankService.getById(questionBankId) == null,
+                ErrorCode.PARAMS_ERROR
+        );
 
     }
 

@@ -1,18 +1,24 @@
 package com.wch.interviewpro.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.wch.interviewpro.common.BaseResponse;
 import com.wch.interviewpro.common.ErrorCode;
+import com.wch.interviewpro.common.ResultUtils;
 import com.wch.interviewpro.constant.CommonConstant;
 import com.wch.interviewpro.exception.ThrowUtils;
 import com.wch.interviewpro.mapper.QuestionMapper;
 import com.wch.interviewpro.model.dto.question.QuestionQueryRequest;
 import com.wch.interviewpro.model.entity.Question;
+import com.wch.interviewpro.model.entity.QuestionBankQuestion;
 import com.wch.interviewpro.model.entity.User;
 import com.wch.interviewpro.model.vo.QuestionVO;
 import com.wch.interviewpro.model.vo.UserVO;
+import com.wch.interviewpro.service.QuestionBankQuestionService;
 import com.wch.interviewpro.service.QuestionService;
 import com.wch.interviewpro.service.UserService;
 import com.wch.interviewpro.utils.SqlUtils;
@@ -20,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -40,6 +47,8 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     implements QuestionService {
     @Resource
     private UserService userService;
+    @Resource
+    private QuestionBankQuestionService questionBankQuestionService;
 
     /**
      * 校验数据
@@ -164,8 +173,6 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         Map<Long, List<User>> userIdUserListMap = userService.listByIds(userIdSet).stream()
                 .collect(Collectors.groupingBy(User::getId));
         // 2. 已登录，获取用户点赞、收藏状态
-        Map<Long, Boolean> questionIdHasThumbMap = new HashMap<>();
-        Map<Long, Boolean> questionIdHasFavourMap = new HashMap<>();
         User loginUser = userService.getLoginUserPermitNull(request);
         if (loginUser != null) {
             Set<Long> questionIdSet = questionList.stream().map(Question::getId).collect(Collectors.toSet());
@@ -187,6 +194,28 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
 
         questionVOPage.setRecords(questionVOList);
         return questionVOPage;
+    }
+
+    public Page<Question> listQuestionPage(QuestionQueryRequest questionQueryRequest) {
+        long current = questionQueryRequest.getCurrent();
+        long size = questionQueryRequest.getPageSize();
+
+        QueryWrapper<Question> wrapper = this.getQueryWrapper(questionQueryRequest);
+
+        Long questionBankId = questionQueryRequest.getQuestionBankId();
+        if (questionBankId != null) {
+            LambdaQueryWrapper<QuestionBankQuestion> lambdaQueryWrapper = Wrappers.lambdaQuery(QuestionBankQuestion.class)
+                    .select(QuestionBankQuestion::getQuestionId)
+                    .eq(QuestionBankQuestion::getQuestionBankId, questionBankId);
+            List<QuestionBankQuestion> list = questionBankQuestionService.list(lambdaQueryWrapper);
+            List<Long> questionIds = list.stream()
+                    .map(QuestionBankQuestion::getQuestionId)
+                    .collect(Collectors.toList());
+            wrapper.in("id", questionIds);
+
+        }
+        // 查询数据库
+        return this.page(new Page<>(current, size), wrapper);
     }
 }
 
